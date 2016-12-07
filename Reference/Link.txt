@@ -1,0 +1,3 @@
+微雪课堂： http://www.waveshare.net/study/portal.php
+正点原子阿波罗（429采用HAL库）： http://www.openedv.com/thread-13912-1-1.html
+TI官方: http://www.ti.com/product/DRV11873/technicaldocuments
