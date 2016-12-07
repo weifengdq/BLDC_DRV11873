@@ -1,0 +1,28 @@
+--cpu Cortex-M0
+"bldc\startup_stm32f030x6.o"
+"bldc\system_stm32f0xx.o"
+"bldc\stm32f0xx_hal_dma.o"
+"bldc\stm32f0xx_hal_pwr_ex.o"
+"bldc\stm32f0xx_hal_flash_ex.o"
+"bldc\stm32f0xx_hal.o"
+"bldc\stm32f0xx_hal_rcc_ex.o"
+"bldc\stm32f0xx_hal_i2c_ex.o"
+"bldc\stm32f0xx_hal_rcc.o"
+"bldc\stm32f0xx_hal_tim_ex.o"
+"bldc\stm32f0xx_hal_pwr.o"
+"bldc\stm32f0xx_hal_cortex.o"
+"bldc\stm32f0xx_hal_uart_ex.o"
+"bldc\stm32f0xx_hal_i2c.o"
+"bldc\stm32f0xx_hal_gpio.o"
+"bldc\stm32f0xx_hal_tim.o"
+"bldc\stm32f0xx_hal_uart.o"
+"bldc\stm32f0xx_hal_flash.o"
+"bldc\stm32f0xx_it.o"
+"bldc\main.o"
+"bldc\usart.o"
+"bldc\gpio.o"
+"bldc\stm32f0xx_hal_msp.o"
+--library_type=microlib --strict --scatter "BLDC\BLDC.sct"
+--diag_suppress=L6329 --summary_stderr --info summarysizes --map --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "BLDC.map" -o BLDC\BLDC.axf
