@@ -17,11 +17,17 @@
 "bldc\stm32f0xx_hal_tim.o"
 "bldc\stm32f0xx_hal_uart.o"
 "bldc\stm32f0xx_hal_flash.o"
+"bldc\stm32f0xx_hal_adc_ex.o"
+"bldc\stm32f0xx_hal_adc.o"
 "bldc\stm32f0xx_it.o"
 "bldc\main.o"
 "bldc\usart.o"
 "bldc\gpio.o"
 "bldc\stm32f0xx_hal_msp.o"
+"bldc\adc.o"
+"bldc\dma.o"
+"bldc\oled.o"
+"bldc\tim.o"
 --library_type=microlib --strict --scatter "BLDC\BLDC.sct"
 --diag_suppress=L6329 --summary_stderr --info summarysizes --map --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers

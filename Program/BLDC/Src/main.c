@@ -33,11 +33,15 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f0xx_hal.h"
+#include "adc.h"
+#include "dma.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "oled.h"
+#include "bmp.h"  
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -53,7 +57,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-
+uint32_t ADC_Value[100];
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -64,7 +68,8 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  uint8_t i;
+  volatile uint32_t adc0, adc1;
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -77,10 +82,17 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART1_UART_Init();
+  MX_ADC_Init();
+  MX_TIM14_Init();
 
   /* USER CODE BEGIN 2 */
-
+  OLED_Init();
+	HAL_ADC_Start_DMA(&hadc, (uint32_t *)&ADC_Value, 100);
+	printf("Hello, Benewake!");
+  User_PWM_SetValue(1000); //48kHz, 满占空比启动
+  HAL_Delay(10);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -90,8 +102,37 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-		printf("Hello, World!\n");
+    for(i = 0,adc0 =0,adc1=0; i < 100;)
+    {
+        adc0 += ADC_Value[i++];
+        adc1 += ADC_Value[i++];
+    }
+    adc0 /= 50;
+    adc1 /= 50;
+
+    printf("\r\n******** ADC DMA Example ********\r\n\r\n");
+    printf(" adc0 value = %1.3fV \r\n", adc0*3.3f/4096);
+    // printf(" adc1 value = %1.3fV \r\n", adc1*3.3f/4096); //0V 3.239V 3.236V 3.240V 0~4020
+    printf(" adc1 value = %d \r\n", adc1);
+
+    adc1 = (adc1>4000) ? 1000 : (adc1/4);
+
+    User_PWM_SetValue(adc1);
+
+
+//		OLED_Clear();
+//    OLED_ShowString(0,0,"0.91OLEDTEST",8);
+//    OLED_ShowString(0,1,"0123456789AB",8);
+    
+
+  //   OLED_Clear();
+		// //x's 1 represents 1 pix, y's 1 represents 8 pix.
+  //   OLED_ShowString(0,0,"0.91OLEDTEST",16);
+  //   OLED_ShowString(8,2,"0123456789AB",16);
+
+
 		HAL_Delay(1000);
+
   }
   /* USER CODE END 3 */
 
@@ -108,9 +149,11 @@ void SystemClock_Config(void)
 
     /**Initializes the CPU, AHB and APB busses clocks 
     */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI14|RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSI14State = RCC_HSI14_ON;
+  RCC_OscInitStruct.HSI14CalibrationValue = 16;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL4;
