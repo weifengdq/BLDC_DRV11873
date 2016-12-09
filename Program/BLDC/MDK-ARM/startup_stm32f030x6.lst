@@ -361,11 +361,11 @@ ARM Macro Assembler    Page 6
               00000000 
 Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M0 --apcs=interw
 ork --depend=bldc\startup_stm32f030x6.d -obldc\startup_stm32f030x6.o -IC:\Users
-\weifengdq\Documents\GitHub\BLDC_DRV11873\Program\BLDC\MDK-ARM\RTE -IC:\Keil_v5
-\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include -IC:\Keil_v5\ARM\PACK\Keil\STM32F0xx_DF
-P\1.5.0\Device\Include --predefine="__MICROLIB SETA 1" --predefine="__UVISION_V
-ERSION SETA 520" --predefine="_RTE_ SETA 1" --predefine="STM32F030x6 SETA 1" --
-list=startup_stm32f030x6.lst startup_stm32f030x6.s
+\weifengdq\Desktop\Program\BLDC\MDK-ARM\RTE -IC:\Keil_v5\ARM\PACK\ARM\CMSIS\4.5
+.0\CMSIS\Include -IC:\Keil_v5\ARM\PACK\Keil\STM32F0xx_DFP\1.5.0\Device\Include 
+--predefine="__MICROLIB SETA 1" --predefine="__UVISION_VERSION SETA 520" --pred
+efine="_RTE_ SETA 1" --predefine="STM32F030x6 SETA 1" --list=startup_stm32f030x
+6.lst startup_stm32f030x6.s
 
 
 

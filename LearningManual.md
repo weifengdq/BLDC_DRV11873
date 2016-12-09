@@ -25,6 +25,9 @@ A BLDC Control Project With DRV11873 Driver, STM32F030F4P6 MCU, OLED, Speed and 
 - 官方评估板原理图如下:　![](http://7xtauc.com1.z0.glb.clouddn.com/DRV11873%E5%AE%98%E6%96%B9%E8%AF%84%E4%BC%B0%E6%9D%BF%E5%8E%9F%E7%90%86%E5%9B%BE.png)
 图中的FS, FG, RD, FR, COM的连接方式值得参考.  
 
+# 注意
+串口和J-link的接口外形是一样， 千万不要插错！这个属于设计失误...
+
 # 开发环境
 主要使用STM32的HAL库进行开发， 需要安装的软件：
 - Keil MDK V5

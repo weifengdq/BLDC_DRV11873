@@ -58,6 +58,13 @@ void Error_Handler(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 uint32_t ADC_Value[100];
+
+//捕获状态
+//[7]:0,没有成功的捕获;1,成功捕获到一次.
+//[6]:0,还没捕获到低电平;1,已经捕获到低电平了.
+//[5:0]:捕获低电平后溢出的次数(对于32位定时器来说,1us计数器加1,溢出时间:4294秒)
+uint8_t  TIM3CH1_CAPTURE_STA=0;	//输入捕获状态		    				
+uint32_t	TIM3CH1_CAPTURE_VAL;	//输入捕获值(TIM2/TIM5是32位)
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -70,6 +77,8 @@ int main(void)
   /* USER CODE BEGIN 1 */
   uint8_t i;
   volatile uint32_t adc0, adc1;
+  volatile long long temp = 0;
+  volatile float setspeed, speed;
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -86,13 +95,21 @@ int main(void)
   MX_USART1_UART_Init();
   MX_ADC_Init();
   MX_TIM14_Init();
+  MX_TIM3_Init();
 
   /* USER CODE BEGIN 2 */
   OLED_Init();
 	HAL_ADC_Start_DMA(&hadc, (uint32_t *)&ADC_Value, 100);
 	printf("Hello, Benewake!");
-  User_PWM_SetValue(1000); //48kHz, 满占空比启动
+  User_PWM_SetValue(450); //48kHz, 45%占空比启��?
   HAL_Delay(10);
+  OLED_ShowString(0, 0, "I(mA)", 16);
+  //OLED_ShowString(39, 0, "ADC1", 16);
+  OLED_ShowString(48, 0, " PWM", 16);
+  OLED_ShowString(88, 0, "f(Hz)", 16);
+  HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_1);
+  __HAL_TIM_ENABLE_IT(&htim3, TIM_IT_UPDATE);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -110,14 +127,35 @@ int main(void)
     adc0 /= 50;
     adc1 /= 50;
 
-    printf("\r\n******** ADC DMA Example ********\r\n\r\n");
-    printf(" adc0 value = %1.3fV \r\n", adc0*3.3f/4096);
+    //printf("\r\n******** ADC DMA Example ********\r\n\r\n");
+    //printf(" adc0 value = %1.3fV \r\n", adc0*3.3f/4096);
     // printf(" adc1 value = %1.3fV \r\n", adc1*3.3f/4096); //0V 3.239V 3.236V 3.240V 0~4020
-    printf(" adc1 value = %d \r\n", adc1);
+    //printf(" adc1 value = %d \r\n", adc1);
+
+    OLED_ShowNum(0, 2, adc0*1000/3723, 4, 16);  //1A - 3V - 3723
+    //OLED_ShowNum(39, 2, adc1, 4, 16);
 
     adc1 = (adc1>4000) ? 1000 : (adc1/4);
-
+    OLED_ShowNum(48, 2, adc1, 4, 16);
     User_PWM_SetValue(adc1);
+
+    if(TIM3CH1_CAPTURE_STA&0X80)        //成功捕获到了一次高电平
+		{
+			temp=TIM3CH1_CAPTURE_STA&0X3F; 
+			temp*=65535;		 	    //溢出时间总和
+			temp+=TIM3CH1_CAPTURE_VAL;      //得到总的高电平时间
+			//printf("HIGH:%lld us\r\n",temp);//打印总的高点平时间, us
+			TIM3CH1_CAPTURE_STA=0;          //开启下一次捕获
+		}
+    OLED_ShowNum(88, 2, 1000000/2/temp, 4, 16);  //占空比50%， 不要超过9999转， 不然， 显示不出来, 只显示转速整数部分
+
+    setspeed = adc1 * 0.05 - 8;
+    speed = 500000.0/temp;
+    printf("%.2f, %.2f\n", setspeed, speed);  //speed = 0.05*PWM - 9; 不是很准确， 应该需要用PID算法来确定. 而不是假设线性
+    
+    HAL_Delay(100);
+
+    //由于代码超出16kB, 注释掉了OLED的图片， 中文和8*8支持.
 
 
 //		OLED_Clear();
@@ -125,14 +163,11 @@ int main(void)
 //    OLED_ShowString(0,1,"0123456789AB",8);
     
 
-  //   OLED_Clear();
-		// //x's 1 represents 1 pix, y's 1 represents 8 pix.
-  //   OLED_ShowString(0,0,"0.91OLEDTEST",16);
-  //   OLED_ShowString(8,2,"0123456789AB",16);
-
-
-		HAL_Delay(1000);
-
+//   OLED_Clear();
+//   x's 1 represents 1 pix, y's 1 represents 8 pix.
+//   OLED_ShowString(0,0,"0.91OLEDTEST",16);
+//   OLED_ShowString(8,2,"0123456789AB",16);
+  
   }
   /* USER CODE END 3 */
 
@@ -196,7 +231,49 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+//定时器更新中断（计数溢出）中断处理回调函数， 该函数在HAL_TIM_IRQHandler中会被调用
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)//更新中断（溢出）发生时执行
+{
+	
+	if((TIM3CH1_CAPTURE_STA&0X80)==0)//还未成功捕获
+	{
+			if(TIM3CH1_CAPTURE_STA&0X40)//已经捕获到高电平了
+			{
+				if((TIM3CH1_CAPTURE_STA&0X3F)==0X3F)//高电平太长了
+				{
+					TIM3CH1_CAPTURE_STA|=0X80;		//标记成功捕获了一次
+					TIM3CH1_CAPTURE_VAL=65535;
+				}else TIM3CH1_CAPTURE_STA++;
+			}	 
+	}		
+}
 
+
+//定时器输入捕获中断处理回调函数，该函数在HAL_TIM_IRQHandler中会被调用
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)//捕获中断发生时执行
+{
+	if((TIM3CH1_CAPTURE_STA&0X80)==0)//还未成功捕获
+	{
+		if(TIM3CH1_CAPTURE_STA&0X40)		//捕获到一个下降沿 		
+			{	  			
+				TIM3CH1_CAPTURE_STA|=0X80;		//标记成功捕获到一次高电平脉宽
+                TIM3CH1_CAPTURE_VAL=HAL_TIM_ReadCapturedValue(&htim3,TIM_CHANNEL_1);//获取当前的捕获值.
+                TIM_RESET_CAPTUREPOLARITY(&htim3,TIM_CHANNEL_1);   //一定要先清除原来的设置！！
+                TIM_SET_CAPTUREPOLARITY(&htim3,TIM_CHANNEL_1,TIM_ICPOLARITY_RISING);//配置TIM5通道1上升沿捕获
+			}else  								//还未开始,第一次捕获上升沿
+			{
+				TIM3CH1_CAPTURE_STA=0;			//清空
+				TIM3CH1_CAPTURE_VAL=0;
+				TIM3CH1_CAPTURE_STA|=0X40;		//标记捕获到了上升沿
+				__HAL_TIM_DISABLE(&htim3);        //关闭定时器5
+				__HAL_TIM_SET_COUNTER(&htim3,0);
+				TIM_RESET_CAPTUREPOLARITY(&htim3,TIM_CHANNEL_1);   //一定要先清除原来的设置！！
+				TIM_SET_CAPTUREPOLARITY(&htim3,TIM_CHANNEL_1,TIM_ICPOLARITY_FALLING);//定时器5通道1设置为下降沿捕获
+				__HAL_TIM_ENABLE(&htim3);//使能定时器5
+			}		    
+	}		
+	
+}
 /* USER CODE END 4 */
 
 /**
