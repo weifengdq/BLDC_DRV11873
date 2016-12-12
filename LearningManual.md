@@ -22,6 +22,7 @@ A BLDC Control Project With DRV11873 Driver, STM32F030F4P6 MCU, OLED, Speed and 
 - OLED用两面粘粘贴到了PCB上.  
 - BLDC任意交换两个引脚， 转向相反.  
 - 拨码开关5 6: 默认关电机有COM; 闭合表示无COM; 实测3/4线均ON即可.
+- AO3400: 由于这个忘记买料了, 使用S8050+S4(1N5819)代替.
 - 官方评估板原理图如下:　![](http://7xtauc.com1.z0.glb.clouddn.com/DRV11873%E5%AE%98%E6%96%B9%E8%AF%84%E4%BC%B0%E6%9D%BF%E5%8E%9F%E7%90%86%E5%9B%BE.png)
 图中的FS, FG, RD, FR, COM的连接方式值得参考.  
 
@@ -147,3 +148,9 @@ STM32CubeMX中点击对应的引脚， 设置为GPIO_Output. 切换到Configurat
 - PA7--PWM  
 
 使用TIM14_CH1, 设置为30kHz， PWM频率为48kHz, PWM值的范围为[0, 1000], 对应占空比[0%, 100%].
+
+# 输入捕获
+引脚对应:  
+- PA6--Capture  
+
+使用TIM3_CH1, 预分频 48-1, 即1M Hz的计数频率, 计数周期65535.
